@@ -1,14 +1,14 @@
-use crate::tile;
+// https://github.com/Grimgrongi/rungeon/wiki/Grid
+
+pub mod tile;
 use std::fmt;
 
-// https://github.com/Ronatos/rungeon/wiki/Grid#gridgrid
 #[derive(Clone)]
 pub struct Grid {
     pub columns: usize,
     pub nodes: Vec<Node>
 }
 
-// https://github.com/Ronatos/rungeon/wiki/Grid#gridgrid
 impl Grid {
     pub fn new(num_columns: usize, nodes: Vec<Node>) -> Grid {
         let num_nodes = nodes.len();
@@ -23,7 +23,6 @@ impl Grid {
     }
 }
 
-// https://github.com/Ronatos/rungeon/wiki/Grid#gridgriddisplay
 impl fmt::Display for Grid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (i, node) in self.nodes.iter().enumerate() {
@@ -36,14 +35,12 @@ impl fmt::Display for Grid {
     }
 }
 
-// https://github.com/Ronatos/rungeon/wiki/Grid#gridgridnode
 #[derive(Clone)]
 pub enum Node {
     Room(Grid),
     Tile(tile::Tile)
 }
 
-// https://github.com/Ronatos/rungeon/wiki/Grid#gridgridnodedisplay
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

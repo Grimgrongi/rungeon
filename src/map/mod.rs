@@ -1,3 +1,5 @@
+pub mod grid;
+
 pub mod room;
 
 use crate::dice;

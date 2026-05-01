@@ -32,9 +32,9 @@ pub mod starting_area_10;
 
 use crate::grid::Grid as Grid;
 use crate::grid::Node as Node;
-use crate::tile::Tile as Tile;
-use crate::tile::TileIcon as TileIcon;
-use crate::tile::TileKind as TileKind;
+use crate::grid::tile::Tile as Tile;
+use crate::grid::tile::TileIcon as TileIcon;
+use crate::grid::tile::TileKind as TileKind;
 
 use rand::Rng;
 
