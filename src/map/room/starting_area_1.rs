@@ -44,116 +44,101 @@ pub fn new() -> Room {
 
     // Generate exits for the room.
     let exits = vec![
-        Exit::new(
-            ExitWall::North,
-            ExitKind::Passage,
-            match dice::roll(14) {
-                1..=2 => ExitWidth::Five,
-                3..=12 => ExitWidth::Ten,
-                13..=14 => ExitWidth::Twenty,
-                _ => panic!("Unexpected dice roll.")
-            }
-        ),
-        Exit::new(
-            ExitWall::South,
-            ExitKind::Passage,
-            match dice::roll(14) {
-                1..=2 => ExitWidth::Five,
-                3..=12 => ExitWidth::Ten,
-                13..=14 => ExitWidth::Twenty,
-                _ => panic!("Unexpected dice roll.")
-            }
-        ),
-        Exit::new(
-            ExitWall::East,
-            ExitKind::Passage,
-            match dice::roll(14) {
-                1..=2 => ExitWidth::Five,
-                3..=12 => ExitWidth::Ten,
-                13..=14 => ExitWidth::Twenty,
-                _ => panic!("Unexpected dice roll.")
-            }
-        ),
-        Exit::new(
-            ExitWall::West,
-            ExitKind::Passage,
-            match dice::roll(14) {
-                1..=2 => ExitWidth::Five,
-                3..=12 => ExitWidth::Ten,
-                13..=14 => ExitWidth::Twenty,
-                _ => panic!("Unexpected dice roll.")
-            }
-        )
+        Exit::new(ExitWall::North, ExitKind::Passage, get_exit_width()),
+        Exit::new(ExitWall::South, ExitKind::Passage, get_exit_width()),
+        Exit::new(ExitWall::East, ExitKind::Passage, get_exit_width()),
+        Exit::new(ExitWall::West, ExitKind::Passage, get_exit_width())
     ];
 
     // Modify the base shape of the room to accommodate the exits.
-    let mut passage_index1: usize;
-    let mut passage_index2: usize;
+    const SOUTH_WALL_OFFSET: u8 = 6 * 8; // 6 rows down * 8 columns per row = 48
+    const EAST_WALL_OFFSET: u8 = 14; // 1 row * 8 columns + 6 columns
+    let columns = shape.columns;
     for exit in exits.iter() {
-        if exit.wall == ExitWall::North && exit.width == ExitWidth::Five {
-            passage_index1 = (dice::roll(4) + 1) as usize;
-            modify_shape_for_passage(&mut shape, ExitWall::North, passage_index1, passage_index1);
-        }
-        if exit.wall == ExitWall::North && exit.width == ExitWidth::Ten {
-            passage_index1 = (dice::roll(3) + 1) as usize;
-            modify_shape_for_passage(&mut shape, ExitWall::North, passage_index1, passage_index1 + 1);
-        }
-        if exit.wall == ExitWall::North && exit.width == ExitWidth::Twenty {
-            modify_shape_for_passage(&mut shape, ExitWall::North, 2 as usize, 5 as usize);
-        }
-        if exit.wall == ExitWall::South && exit.width == ExitWidth::Five {
-            passage_index1 = (48 + (dice::roll(4) + 1)) as usize;
-            modify_shape_for_passage(&mut shape, ExitWall::South, passage_index1, passage_index1);
-        }
-        if exit.wall == ExitWall::South && exit.width == ExitWidth::Ten {
-            passage_index1 = (48 + (dice::roll(3) + 1)) as usize;
-            modify_shape_for_passage(&mut shape, ExitWall::South, passage_index1, passage_index1 + 1);
-        }
-        if exit.wall == ExitWall::South && exit.width == ExitWidth::Twenty {
-            modify_shape_for_passage(&mut shape, ExitWall::South, 50 as usize, 53 as usize);
-        }
-        if exit.wall == ExitWall::East && exit.width == ExitWidth::Five {
-            passage_index1 = (14 + (dice::roll(4) * 8)) as usize;
-            shape.nodes[passage_index1] = flor.clone();
-            shape.nodes[passage_index1 + 1] = flor.clone();
-        }
-        if exit.wall == ExitWall::East && exit.width == ExitWidth::Ten {
-            passage_index1 = (14 + (dice::roll(3) * 8)) as usize;
-            shape.nodes[passage_index1] = flor.clone();
-            shape.nodes[passage_index1 + shape.columns] = flor.clone();
-            shape.nodes[passage_index1 + 1] = flor.clone();
-            shape.nodes[passage_index1 + shape.columns + 1] = flor.clone();
-        }
-        if exit.wall == ExitWall::East && exit.width == ExitWidth::Twenty {
-            shape.nodes[22 as usize] = flor.clone();
-            shape.nodes[23 as usize] = flor.clone();
-            shape.nodes[30 as usize] = flor.clone();
-            shape.nodes[31 as usize] = flor.clone();
-            shape.nodes[38 as usize] = flor.clone();
-            shape.nodes[39 as usize] = flor.clone();
-            shape.nodes[46 as usize] = flor.clone();
-            shape.nodes[47 as usize] = flor.clone();
+        match (exit.wall, exit.width) {
+            (ExitWall::North, ExitWidth::Five) => {
+                // North wall: rows 0-1, columns 2-5 are valid for a 1 wide passage
+                let index = (dice::roll(4) + 1) as usize; // 1-4 + 1 = 2-5
+                add_passage(&mut shape, index, 1, 2, columns);
+            },
+            (ExitWall::North, ExitWidth::Ten) => {
+                // North wall: rows 0-1, columns 2-4 are valid for a 2 wide passage
+                let index = (dice::roll(3) + 1) as usize; // 1-3 + 1 = 2-4
+                add_passage(&mut shape, index, 2, 2, columns);
+            },
+            (ExitWall::North, ExitWidth::Twenty) => {
+                // North wall: rows 0-1, columns 2-5 are valid for a 4 wide passage
+                let index = 2;
+                add_passage(&mut shape, index, 4, 2, columns);
+            },
+            (ExitWall::South, ExitWidth::Five) => {
+                // South wall: rows 6-7, columns 2-5 (50-53) are valid for a 1 wide passage
+                let index = ((dice::roll(4) + 1) + SOUTH_WALL_OFFSET) as usize; // 1-4 + 1 + 48 (6 rows down) = 50-53
+                add_passage(&mut shape, index, 1, 2, columns);
+            },
+            (ExitWall::South, ExitWidth::Ten) => {
+                // South wall: rows 6-7, columns 2-4 (50-52) are valid for a 2 wide passage
+                let index = ((dice::roll(3) + 1) + SOUTH_WALL_OFFSET) as usize; // 1-3 + 1 + 48 (6 rows down) = 50-52
+                add_passage(&mut shape, index, 2, 2, columns);
+            },
+            (ExitWall::South, ExitWidth::Twenty) => {
+                // South wall: rows 6-7, columns 2-5 (50-53) are valid for a 4 wide passage
+                let index = 50;
+                add_passage(&mut shape, index, 4, 2, columns);
+            },
+            (ExitWall::East, ExitWidth::Five) => {
+                // East wall: columns 7-8, rows 2-5 are valid for a 1 wide passage
+                let index = ((dice::roll(4) * 8) + EAST_WALL_OFFSET) as usize; // 1-4 * 8 + 14 = 22, 30, 38, 46
+                add_passage(&mut shape, index, 2, 1, columns);
+            },
+            (ExitWall::East, ExitWidth::Ten) => {
+                // East wall: columns 7-8, rows 2-4 are valid for a 2 wide passage
+                let index = ((dice::roll(3) * 8) + EAST_WALL_OFFSET) as usize; // 1-3 * 8 + 14 = 22, 30, 38
+                add_passage(&mut shape, index, 2, 2, columns);
+            },
+            (ExitWall::East, ExitWidth::Twenty) => {
+                // East wall: columns 7-8, rows 2-5 are valid for a 4 wide passage
+                let index = 22;
+                add_passage(&mut shape, index, 2, 4, columns);
+            },
+            (ExitWall::West, ExitWidth::Five) => {
+                // West wall: columns 0-1, rows 2-5 are valid for a 1 wide passage
+                let index = ((dice::roll(4) + 1) * 8) as usize; // 1-4 + 1 = 2-5, then multiply by 8 to get the left column of the passage on the west wall = 16, 24, 32, 40
+                add_passage(&mut shape, index, 2, 1, columns);
+            },
+            (ExitWall::West, ExitWidth::Ten) => {
+                // West wall: columns 0-1, rows 2-4 are valid for a 2 wide passage
+                let index = ((dice::roll(3) + 1) * 8) as usize; // 1-3 + 1 = 2-4, then multiply by 8 to get the left column of the passage on the west wall = 16, 24, 32
+                add_passage(&mut shape, index, 2, 2, columns);
+            },
+            (ExitWall::West, ExitWidth::Twenty) => {
+                // West wall: columns 0-1, rows 2-5 are valid for a 4 wide passage
+                let index = 16;
+                add_passage(&mut shape, index, 2, 4, columns);
+            }
         }
     }
 
     Room::new(shape, exits)
 }
 
-fn modify_shape_for_passage(shape: &mut Grid, wall: ExitWall, passage_index1: usize, passage_index2: usize) {
-    let floor_tile = Node::Tile(Tile {
+fn get_exit_width() -> ExitWidth {
+    match dice::roll(14) {
+        1..=2 => ExitWidth::Five,
+        3..=12 => ExitWidth::Ten,
+        13..=14 => ExitWidth::Twenty,
+        _ => panic!("Unexpected dice roll.")
+    }
+}
+
+fn add_passage(shape: &mut Grid, start: usize, width: usize, height: usize, columns: usize) {
+    let floor = Node::Tile(Tile {
         kind: TileKind::Floor,
         icon: TileIcon::Floor
     });
-    if wall == ExitWall::North || wall == ExitWall::South {
-        for i in passage_index1..=passage_index2 {
-            shape.nodes[i] = floor_tile.clone();
-            shape.nodes[i + shape.columns] = floor_tile.clone();
-        }
-    }
-    if wall == ExitWall::East || wall == ExitWall::West {
-        for i in passage_index1..=passage_index2 {
-            shape.nodes[i] = floor_tile.clone();
-            shape.nodes[i + 1] = floor_tile.clone();
+    for h in 0..height {
+        for w in 0..width {
+            shape.nodes[start + w + (h * columns)] = floor.clone();
         }
     }
 }

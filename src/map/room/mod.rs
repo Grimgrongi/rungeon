@@ -1,21 +1,11 @@
 use std::fmt;
 
 pub mod exit;
-
 pub mod starting_area_1;
+// pub mod starting_area_2;
 
-use crate::map::grid::Grid as Grid;
+use crate::map::grid::Grid;
 use crate::map::room::exit::Exit;
-
-// use rand::Rng;
-
-// #[derive(Clone, PartialEq)]
-// pub enum Wall {
-//     North,
-//     South,
-//     East,
-//     West
-// }
 
 #[derive(Clone)]
 pub struct Room {

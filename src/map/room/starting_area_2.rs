@@ -1,17 +1,25 @@
 use crate::dice;
-use crate::grid::Grid as Grid;
-use crate::grid::Node as Node;
-use crate::map::room::place_door as place_door;
-use crate::map::room::place_passage as place_passage;
-use crate::map::room::Room as Room;
-use crate::map::room::Wall as Wall;
-use crate::grid::tile::Tile as Tile;
-use crate::grid::tile::TileIcon as TileIcon;
-use crate::grid::tile::TileKind as TileKind;
+use crate::map::grid::{Grid, Node};
+use crate::map::grid::tile::{Tile, TileIcon, TileKind};
+use crate::map::room::Room;
+use crate::map::room::exit::{Exit, ExitKind, ExitWall, ExitWidth};
 
-use rand::Rng;
+/*
+    Starting Area 2 is a 20x20ft square room that serves as the starting point for a map.
+    There are three guaranteed exits; two doors and one passage.
+    Doors may be 5ft wide.
+    Passages may be 5/10/20ft wide.
 
-// https://github.com/Ronatos/rungeon/wiki/Room#starting-area-2
+    # # # # # # # #
+    # # # # # # # #
+    # #         # #
+    # #         # #
+    # #         # #
+    # #         # #
+    # # # # # # # #
+    # # # # # # # #
+*/
+
 pub fn new() -> Room {
     let wall = Node::Tile(Tile {
         kind: TileKind::Wall,

@@ -12,7 +12,7 @@ pub enum ExitKind {
     SecretDoor
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum ExitWall {
     North,
     South,
@@ -20,7 +20,7 @@ pub enum ExitWall {
     West
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum ExitWidth {
     Five,
     Ten,
