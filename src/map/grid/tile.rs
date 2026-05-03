@@ -33,7 +33,7 @@ pub enum TileIcon {
 impl fmt::Display for TileIcon {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TileIcon::Door => write!(f, "{} ", "d"),
+            TileIcon::Door => write!(f, "{} ", "/"),
             TileIcon::Floor => write!(f, "{} ", " "),
             TileIcon::Wall => write!(f, "{} ", "#"),
             TileIcon::Well => write!(f, "{} ", "w"),

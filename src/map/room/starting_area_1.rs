@@ -2,6 +2,7 @@ use crate::dice;
 use crate::map::grid::{Grid, Node};
 use crate::map::grid::tile::{Tile, TileIcon, TileKind};
 use crate::map::room::Room;
+use crate::map::room::{add_passage, get_exit_width};
 use crate::map::room::exit::{Exit, ExitKind, ExitWall, ExitWidth};
 
 /*
@@ -32,14 +33,14 @@ pub fn new() -> Room {
 
     // Initialize the base shape of the room.
     let mut shape = Grid::new(8, vec![
-        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),wall.clone(),
-        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),wall.clone(),
-        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(),wall.clone(), //22 23
-        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(),wall.clone(), //30 31
-        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(),wall.clone(), //38 39
-        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(),wall.clone(), //46 47
-        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),wall.clone(),
-        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),wall.clone()
+        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(), //22 23
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(), //30 31
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(), //38 39
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(), //46 47
+        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone()
     ]);
 
     // Generate exits for the room.
@@ -120,25 +121,4 @@ pub fn new() -> Room {
     }
 
     Room::new(shape, exits)
-}
-
-fn get_exit_width() -> ExitWidth {
-    match dice::roll(14) {
-        1..=2 => ExitWidth::Five,
-        3..=12 => ExitWidth::Ten,
-        13..=14 => ExitWidth::Twenty,
-        _ => panic!("Unexpected dice roll.")
-    }
-}
-
-fn add_passage(shape: &mut Grid, start: usize, width: usize, height: usize, columns: usize) {
-    let floor = Node::Tile(Tile {
-        kind: TileKind::Floor,
-        icon: TileIcon::Floor
-    });
-    for h in 0..height {
-        for w in 0..width {
-            shape.nodes[start + w + (h * columns)] = floor.clone();
-        }
-    }
 }

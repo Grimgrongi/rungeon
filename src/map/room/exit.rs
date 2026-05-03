@@ -5,7 +5,7 @@ pub struct Exit {
     pub width: ExitWidth
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum ExitKind {
     Door,
     Passage,
