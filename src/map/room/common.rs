@@ -1,3 +1,6 @@
+pub mod exit_placement;
+use std::vec;
+
 use crate::dice;
 use crate::map::grid::{Grid, Node};
 use crate::map::grid::tile::{Tile, TileIcon, TileKind};
@@ -21,7 +24,7 @@ impl Placement {
     }
 }
 
-pub fn add_door(shape: &mut Grid, placement: Placement) {
+pub fn place_door(shape: &mut Grid, placement: Placement) {
     let grid_width = shape.columns;
     let start = grid_index(placement.row, placement.column, grid_width);
     let door = Node::Tile(Tile {
@@ -79,7 +82,16 @@ pub fn grid_index(row: usize, column: usize, grid_width: usize) -> usize {
     row * grid_width + column
 }
 
-pub fn placement_on_wall(wall: ExitWall, width: ExitWidth) -> Placement {
+pub fn place_exits(shape: &mut Grid, exits: Vec<Exit>) {
+    for exit in exits.iter() {
+         match exit.kind {
+             ExitKind::Door => place_door(shape, placement_on_wall(exit.wall, exit.width)),
+             ExitKind::Passage => add_passage(shape, placement_on_wall(exit.wall, exit.width))
+    }
+    let placement = placement_on_wall(exit.wall, exit.width);
+}
+
+pub fn calculate_exit_placement(wall: ExitWall, width: ExitWidth) -> Placement {
     const NORTH_ROW: usize = 0;
     const NORTH_HEIGHT: usize = 2;
     const SOUTH_ROW: usize = 6;
