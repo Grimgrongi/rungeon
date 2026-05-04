@@ -5,7 +5,7 @@ pub use common::*;
 
 pub mod exit;
 pub mod starting_area_1;
-pub mod starting_area_2;
+// pub mod starting_area_2;
 
 use crate::map::grid::Grid;
 use crate::map::room::exit::Exit;

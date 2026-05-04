@@ -2,7 +2,7 @@ use crate::dice;
 use crate::map::grid::{Grid, Node};
 use crate::map::grid::tile::{Tile, TileIcon, TileKind};
 use crate::map::room::{Room, add_door};
-use crate::map::room::{add_passage, get_exit_width, shuffle_walls};
+use crate::map::room::{add_passage, get_exit_width, shuffle_walls, grid_index, placement_on_wall};
 use crate::map::room::exit::{Exit, ExitKind, ExitWall, ExitWidth};
 
 /*
@@ -59,15 +59,21 @@ pub fn new() -> Room {
     ];
 
     // Modify the base shape of the room to accommodate the exits.
+    const NORTH_ROW: usize = 0;
     const SOUTH_WALL_OFFSET: u8 = 6 * 8; // 6 rows down * 8 columns per row = 48
     const EAST_WALL_OFFSET: u8 = 14; // 1 row * 8 columns + 6 columns
-    let columns = shape.columns;
     for exit in exits.iter() {
         match (exit.wall, exit.kind, exit.width) {
             (ExitWall::North, ExitKind::Door, ExitWidth::Five) => {
                 // North wall: rows 0-1, columns 2-5 are valid for a 1 wide passage
-                let index = (dice::roll(4) + 1) as usize; // 1-4 + 1 = 2-5
-                add_door(&mut shape, index, 1, 2, columns);
+                let (row, col, height, width) = placement_on_wall(exit.wall, exit.width);
+                add_door(
+                    &mut shape,
+                    row,
+                    col,
+                    width,
+                    height
+                );
             },
             (ExitWall::North, ExitKind::Passage, ExitWidth::Five) => {
                 // North wall: rows 0-1, columns 2-5 are valid for a 1 wide passage
