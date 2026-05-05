@@ -1,7 +1,6 @@
 use crate::map::grid::{Grid, Node};
 use crate::map::grid::tile::{Tile, TileIcon, TileKind};
-use crate::map::room::{Room, placement_on_wall};
-use crate::map::room::{add_passage, get_random_exit_width};
+use crate::map::room::{Room, calculate_exit_placement, place_exits, get_random_exit_width};
 use crate::map::room::exit::{Exit, ExitKind, ExitWall, ExitWidth};
 
 /*
@@ -52,21 +51,11 @@ pub fn new() -> Room {
     ];
 
     // Modify the base shape of the room to accommodate the exits.
+    
     for exit in exits.iter() {
-        match exit.wall {
-            ExitWall::North => {
-                add_passage(&mut shape, placement_on_wall(ExitWall::North, exit.width));
-            },
-            ExitWall::South => {
-                add_passage(&mut shape, placement_on_wall(ExitWall::South, exit.width));
-            },
-            ExitWall::East => {
-                add_passage(&mut shape, placement_on_wall(ExitWall::East, exit.width));
-            },
-            ExitWall::West => {
-                add_passage(&mut shape, placement_on_wall(ExitWall::West, exit.width));
-             }
-        }
+        place_passage(shape, calculate_exit_placement(shape.nodes.len(), shape.columns, exit));
     }
+
+    // Return the completed room.
     Room::new(shape, exits)
 }
