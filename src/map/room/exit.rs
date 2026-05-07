@@ -1,3 +1,7 @@
+use std::collections::btree_map::Range;
+
+use crate::dice;
+
 #[derive(Clone, PartialEq)]
 pub struct Exit {
     pub kind: ExitKind,
@@ -5,36 +9,21 @@ pub struct Exit {
     pub width: ExitWidth
 }
 
-impl Exit {
-    pub fn new(wall: ExitWall, kind: ExitKind, width: ExitWidth) -> Exit {
-        Exit {
-            kind,
-            wall,
-            width
-        }
-    }
-}
+// impl Exit {
+//     pub fn new(wall: ExitWall, kind: ExitKind, rows: Range<i32>, columns: Range<i32>) -> Exit {
+//         Exit {
+//             kind,
+//             wall,
+//             ExitWidth::Five
+//         }
+//     }
+// }
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum ExitKind {
     Door,
     Passage,
     SecretDoor
-}
-
-#[derive(Copy, Clone, PartialEq)]
-pub enum ExitWall {
-    North,
-    South,
-    East,
-    West
-}
-
-#[derive(Copy, Clone, PartialEq)]
-pub enum ExitWidth {
-    Five,
-    Ten,
-    Twenty
 }
 
 pub struct ExitPlacement {

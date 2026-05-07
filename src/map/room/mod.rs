@@ -1,26 +1,26 @@
 use std::fmt;
 
-pub mod common;
-pub use common::*;
+use crate::dice;
 
-pub mod exit;
+// pub mod common;
+// pub use common::*;
+
+// pub mod exit;
 pub mod starting_area_1;
 pub mod starting_area_2;
 
 use crate::map::grid::Grid;
-use crate::map::room::exit::Exit;
+// use crate::map::room::exit::Exit;
 
 #[derive(Clone)]
 pub struct Room {
-    pub grid: Grid,
-    pub exits: Vec<Exit>
+    pub grid: Grid
 }
 
 impl Room {
-    pub fn new(grid: Grid, exits: Vec<Exit>) -> Room {
+    pub fn new(grid: Grid) -> Room {
         Room {
-            grid,
-            exits
+            grid
         }
     }
 }
@@ -29,6 +29,34 @@ impl Room {
 impl fmt::Display for Room {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.grid)
+    }
+}
+
+#[derive(Copy, Clone, PartialEq)]
+pub enum ExitLength {
+    Five,
+    Ten,
+    Twenty
+}
+
+pub fn get_random_exit_length(max_length: ExitLength) -> ExitLength {
+    match max_length {
+        ExitLength::Five => ExitLength::Five,
+        ExitLength::Ten => {
+            match dice::roll(12) {
+                1..=2 => ExitLength::Five,
+                3..=12 => ExitLength::Ten,
+                _ => panic!("Unexpected dice roll.")
+            }
+        },
+        ExitLength::Twenty => {
+            match dice::roll(14) {
+                1..=2 => ExitLength::Five,
+                3..=12 => ExitLength::Ten,
+                13..=14 => ExitLength::Twenty,
+                _ => panic!("Unexpected dice roll.")
+            }
+        }
     }
 }
 

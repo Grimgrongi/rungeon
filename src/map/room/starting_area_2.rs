@@ -1,11 +1,7 @@
-use std::char::MAX;
-
 use crate::dice;
 use crate::map::grid::{Grid, Node};
 use crate::map::grid::tile::{Tile, TileIcon, TileKind};
-use crate::map::room::{Room, add_door};
-use crate::map::room::{add_passage, get_random_exit_width, shuffle_walls, grid_index, placement_on_wall};
-use crate::map::room::exit::{Exit, ExitKind, ExitWall, ExitWidth};
+use crate::map::room::{Room, ExitLength, get_random_exit_length};
 
 /*
     Starting Area 2 is a 20x20ft square room that serves as the starting point for a map.
@@ -24,6 +20,18 @@ use crate::map::room::exit::{Exit, ExitKind, ExitWall, ExitWidth};
 */
 
 pub fn new() -> Room {
+    // Set room properties.
+    const NUM_ROWS: usize = 8;
+    const NUM_COLS: usize = 8;
+    const WALL_THICKNESS: usize = 2;
+
+    const NORTH_WALL_ROW: usize = 0;
+    const SOUTH_WALL_ROW: usize = NUM_ROWS - WALL_THICKNESS;
+    const EAST_WALL_COL: usize = NUM_COLS - WALL_THICKNESS;
+    const WEST_WALL_COL: usize = 0;
+    
+    const MAX_EXIT_LENGTH: ExitLength = ExitLength::Twenty;
+
     // Initialize building blocks for the room.
     let wall = Node::Tile(Tile {
         kind: TileKind::Wall,
@@ -49,6 +57,12 @@ pub fn new() -> Room {
         wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
         wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone()
     ]);
+
+    // Determine exit lengths given size of room
+    let north_exit_width = get_random_exit_length(MAX_EXIT_LENGTH);
+    let south_exit_width = get_random_exit_length(MAX_EXIT_LENGTH);
+    let east_exit_height = get_random_exit_length(MAX_EXIT_LENGTH);
+    let west_exit_height = get_random_exit_length(MAX_EXIT_LENGTH);
 
     // Generate exits for the room.
     const MAX_EXIT_WIDTH: ExitWidth = ExitWidth::Twenty;

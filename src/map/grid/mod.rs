@@ -21,6 +21,28 @@ impl Grid {
             nodes
         }
     }
+
+    pub fn rows(&self) -> usize {
+        self.nodes.len() / self.columns
+    }
+
+    pub fn update(&mut self, source: &Grid, target_row: usize, target_column: usize) {
+        if target_column + source.columns > self.columns || target_row + source.rows() > self.rows() {
+            panic!(
+                "Source grid does not fit into target grid at ({}, {})",
+                target_row, target_column
+            );
+        }
+
+        for source_row in 0..source.rows() {
+            let dest_base = (target_row + source_row) * self.columns + target_column;
+            let source_base = source_row * source.columns;
+
+            for source_column in 0..source.columns {
+                self.nodes[dest_base + source_column] = source.nodes[source_base + source_column].clone();
+            }
+        }
+    }
 }
 
 impl fmt::Display for Grid {
