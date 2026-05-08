@@ -43,6 +43,17 @@ impl Grid {
             }
         }
     }
+
+    pub fn rotate_clockwise(&self) -> Grid {
+        let mut rotated_nodes: Vec<Node> = Vec::new();
+        for column in 0..self.columns {
+            for row in (0..self.rows()).rev() {
+                let index = row * self.columns + column;
+                rotated_nodes.push(self.nodes[index].clone());
+            }
+        }
+        Grid::new(self.rows(), rotated_nodes)
+    }
 }
 
 impl fmt::Display for Grid {

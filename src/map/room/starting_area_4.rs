@@ -3,7 +3,6 @@ use crate::map::grid::{Grid, Node};
 use crate::map::grid::tile::{Tile, TileIcon, TileKind};
 use crate::map::room::{Room, ExitLength,  Wall, get_exit_passage, get_random_exit_length, shuffle_walls, get_exit_door};
 
-// https://github.com/Ronatos/rungeon/wiki/Room#starting-area-4
 /*
     Starting Area 4 is a 80x20ft rectangular room with a row of pillars down the middle
     that serves as the starting point for a map.
@@ -63,27 +62,46 @@ pub fn new() -> Room {
     let east_wall_col: usize = num_cols - WALL_THICKNESS;
     const WEST_WALL_COL: usize = 0;
 
+    // Initialize building blocks for the room.
     let wall = Node::Tile(Tile {
         kind: TileKind::Wall,
         icon: TileIcon::Wall
     });
-    let floor = Node::Tile(Tile {
+    let flor = Node::Tile(Tile {
         kind: TileKind::Floor,
         icon: TileIcon::Floor
     });
 
-    if dice::roll(2) == 1 {
-        // Let's build a horizontal starting area 4
-        let mut starting_area4 = Grid::new(20, vec![
-            wall.clone(),wall.clone(),wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone()
-        ]);
+    // Initialize the base shape of the room.
+    // Note: Of the two configurations for this room,
+    // this one is easier to build the base shape for,
+    // so we'll build this one and rotate it if necessary.
+    let mut room_grid = Grid::new(8, vec![
+        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone()
+    ]);
+
+    if num_cols != 8 {
+        room_grid = room_grid.rotate_clockwise();
+    }
 
         starting_area4 = place_door(starting_area4, Wall::East);
         starting_area4 = place_door(starting_area4, Wall::West);
