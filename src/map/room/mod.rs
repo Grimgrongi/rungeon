@@ -1,16 +1,13 @@
 use std::fmt;
 
 use crate::dice;
+use crate::map::grid::{Grid, Node};
+use crate::map::grid::tile::{Tile, TileIcon, TileKind};
 
-// pub mod common;
-// pub use common::*;
-
-// pub mod exit;
 pub mod starting_area_1;
 pub mod starting_area_2;
-
-use crate::map::grid::Grid;
-// use crate::map::room::exit::Exit;
+pub mod starting_area_3;
+pub mod starting_area_4;
 
 #[derive(Clone)]
 pub struct Room {
@@ -32,11 +29,21 @@ impl fmt::Display for Room {
     }
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ExitLength {
     Five,
     Ten,
-    Twenty
+    Twenty,
+    Thirty,
+    Forty
+}
+
+#[derive(Copy, Clone, PartialEq)]
+pub enum Wall {
+    North,
+    South,
+    East,
+    West
 }
 
 pub fn get_random_exit_length(max_length: ExitLength) -> ExitLength {
@@ -56,171 +63,104 @@ pub fn get_random_exit_length(max_length: ExitLength) -> ExitLength {
                 13..=14 => ExitLength::Twenty,
                 _ => panic!("Unexpected dice roll.")
             }
+        },
+        ExitLength::Thirty => {
+            match dice::roll(16) {
+                1..=2 => ExitLength::Five,
+                3..=12 => ExitLength::Ten,
+                13..=14 => ExitLength::Twenty,
+                15..=16 => ExitLength::Thirty,
+                _ => panic!("Unexpected dice roll.")
+            }
+        },
+        ExitLength::Forty => {
+            match dice::roll(20) {
+                1..=2 => ExitLength::Five,
+                3..=12 => ExitLength::Ten,
+                13..=14 => ExitLength::Twenty,
+                15..=16 => ExitLength::Thirty,
+                17..=20 => ExitLength::Forty,
+                _ => panic!("Unexpected dice roll.")
+            }
         }
     }
 }
 
-// pub fn place_passage(mut starting_area: Grid, wall: Wall, width: usize) -> Grid {
-//     let mut rng = rand::thread_rng();
-//     let floor = Node::Tile(Tile {kind: TileKind::Floor, icon: TileIcon::Floor});
+pub fn get_exit_passage(wall: Wall, width: ExitLength) -> Grid {
+    let flor = Node::Tile(Tile {
+        kind: TileKind::Floor,
+        icon: TileIcon::Floor
+    });
 
-//     match wall {
-//         Wall::North => {
-//             let top_row = 0;
-//             let bottom_row = 1;
-//             let wall_length = starting_area.columns - 4;
-            
-//             if width == 5 {
-//                 let column = rng.gen_range(2..wall_length + 2);
-//                 starting_area.nodes[column + (starting_area.columns * top_row)] = floor.clone();
-//                 starting_area.nodes[column + (starting_area.columns * bottom_row)] = floor.clone();
-//             }
-//             else if width == 10 {
-//                 let left_column = rng.gen_range(2..wall_length + 1);
-//                 starting_area.nodes[left_column + (starting_area.columns * top_row)] = floor.clone();
-//                 starting_area.nodes[left_column + (starting_area.columns * bottom_row)] = floor.clone();
-//                 starting_area.nodes[(left_column + 1) + (starting_area.columns * top_row)] = floor.clone();
-//                 starting_area.nodes[(left_column + 1) + (starting_area.columns * bottom_row)] = floor.clone();
-//             }
-//         },
-//         Wall::South => {
-//             let top_row = (starting_area.nodes.len() / starting_area.columns) - 2;
-//             let bottom_row = (starting_area.nodes.len() / starting_area.columns) - 1;
-//             let wall_length = starting_area.columns - 4;
-            
-//             if width == 5 {
-//                 let column = rng.gen_range(2..wall_length + 2);
-//                 starting_area.nodes[column + (starting_area.columns * top_row)] = floor.clone();
-//                 starting_area.nodes[column + (starting_area.columns * bottom_row)] = floor.clone();
-//             }
-//             else if width == 10 {
-//                 let left_column = rng.gen_range(2..wall_length + 1);
-//                 starting_area.nodes[left_column + (starting_area.columns * top_row)] = floor.clone();
-//                 starting_area.nodes[left_column + (starting_area.columns * bottom_row)] = floor.clone();
-//                 starting_area.nodes[(left_column + 1) + (starting_area.columns * top_row)] = floor.clone();
-//                 starting_area.nodes[(left_column + 1) + (starting_area.columns * bottom_row)] = floor.clone();
-//             }
-//         },
-//         Wall::East => {
-//             let left_column = 0;
-//             let right_column = 1;
-//             let wall_length = (starting_area.nodes.len() / starting_area.columns) - 4;
+    let num_columns = if wall == Wall::East || wall == Wall::West {
+        2
+    }
+    else {
+        match width {
+            ExitLength::Five => 1,
+            ExitLength::Ten => 2,
+            ExitLength::Twenty => 4,
+            ExitLength::Thirty => 6,
+            ExitLength::Forty => 8
+        }
+    };
 
-//             if width == 5 {
-//                 let row = rng.gen_range(2..wall_length + 2);
-//                 starting_area.nodes[(row * starting_area.columns) + left_column] = floor.clone();
-//                 starting_area.nodes[(row * starting_area.columns) + right_column] = floor.clone();
-//             }
-//             else if width == 10 {
-//                 let top_row = rng.gen_range(2..wall_length + 1);
-//                 starting_area.nodes[(top_row * starting_area.columns) + left_column] = floor.clone();
-//                 starting_area.nodes[(top_row * starting_area.columns) + right_column] = floor.clone();
-//                 starting_area.nodes[((top_row + 1) * starting_area.columns) + left_column] = floor.clone();
-//                 starting_area.nodes[((top_row + 1) * starting_area.columns) + right_column] = floor.clone();
-//             }
-//         },
-//         Wall::West => {
-//             let left_column = starting_area.columns - 2;
-//             let right_column = starting_area.columns - 1;
-//             let wall_length = (starting_area.nodes.len() / starting_area.columns) - 4;
+    Grid::new(
+        num_columns,
+        match width {
+            ExitLength::Five => vec![
+                flor.clone(),
+                flor.clone()
+            ],
+            ExitLength::Ten => vec![
+                flor.clone(), flor.clone(),
+                flor.clone(), flor.clone()
+            ],
+            ExitLength::Twenty => vec![
+                flor.clone(), flor.clone(), flor.clone(), flor.clone(),
+                flor.clone(), flor.clone(), flor.clone(), flor.clone()
+            ],
+            ExitLength::Thirty => vec![
+                flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(),
+                flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone()
+            ],
+            ExitLength::Forty => vec![
+                flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(),
+                flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone()
+            ]
+        }
+    )
+}
 
-//             if width == 5 {
-//                 let row = rng.gen_range(2..wall_length + 2);
-//                 starting_area.nodes[(row * starting_area.columns) + left_column] = floor.clone();
-//                 starting_area.nodes[(row * starting_area.columns) + right_column] = floor.clone();
-//             }
-//             else if width == 10 {
-//                 let top_row = rng.gen_range(2..wall_length + 1);
-//                 starting_area.nodes[(top_row * starting_area.columns) + left_column] = floor.clone();
-//                 starting_area.nodes[(top_row * starting_area.columns) + right_column] = floor.clone();
-//                 starting_area.nodes[((top_row + 1) * starting_area.columns) + left_column] = floor.clone();
-//                 starting_area.nodes[((top_row + 1) * starting_area.columns) + right_column] = floor.clone();
-//             }
-//         }
-//     }
-//     starting_area
-// }
+pub fn shuffle_walls(walls: &mut [Wall; 4]) {
+    for i in (1..walls.len()).rev() {
+        let j = (dice::roll((i + 1) as u8) as usize) - 1;
+        walls.swap(i, j);
+    }
+}
 
-// pub fn place_door(mut starting_area: Grid, wall: Wall) -> Grid {
-//     let mut rng = rand::thread_rng();
-//     let door = Node::Tile(Tile {kind: TileKind::Door, icon: TileIcon::Door});
-//     let floor = Node::Tile(Tile {kind: TileKind::Floor, icon: TileIcon::Floor});
+pub fn get_exit_door(wall: Wall) -> Grid {
+    let door = Node::Tile(Tile {
+        kind: TileKind::Door,
+        icon: TileIcon::Door
+    });
+    let flor = Node::Tile(Tile {
+        kind: TileKind::Floor,
+        icon: TileIcon::Floor
+    });
 
-//     match wall {
-//         Wall::North => {
-//             let top_row = 0;
-//             let bottom_row = 1;
-//             let wall_length = starting_area.columns - 4;
-//             let column = rng.gen_range(2..wall_length + 2);
-//             starting_area.nodes[column + (starting_area.columns * top_row)] = floor.clone();
-//             starting_area.nodes[column + (starting_area.columns * bottom_row)] = door.clone();
-//         },
-//         Wall::South => {
-//             let top_row = (starting_area.nodes.len() / starting_area.columns) - 2;
-//             let bottom_row = (starting_area.nodes.len() / starting_area.columns) - 1;
-//             let wall_length = starting_area.columns - 4;
-//             let column = rng.gen_range(2..wall_length + 2);
-//             starting_area.nodes[column + (starting_area.columns * top_row)] = door.clone();
-//             starting_area.nodes[column + (starting_area.columns * bottom_row)] = floor.clone();
-//         },
-//         Wall::East => {
-//             let left_column = 0;
-//             let right_column = 1;
-//             let wall_length = (starting_area.nodes.len() / starting_area.columns) - 4;
-//             let row = rng.gen_range(2..wall_length + 2);
-//             starting_area.nodes[(row * starting_area.columns) + left_column] = floor.clone();
-//             starting_area.nodes[(row * starting_area.columns) + right_column] = door.clone();
-//         },
-//         Wall::West => {
-//             let left_column = starting_area.columns - 2;
-//             let right_column = starting_area.columns - 1;
-//             let wall_length = (starting_area.nodes.len() / starting_area.columns) - 4;
-//             let row = rng.gen_range(2..wall_length + 2);
-//             starting_area.nodes[(row * starting_area.columns) + left_column] = door.clone();
-//             starting_area.nodes[(row * starting_area.columns) + right_column] = floor.clone();
-//         }
-//     }
-//     starting_area
-// }
+    let num_columns = if wall == Wall::East || wall == Wall::West {
+        2
+    }
+    else {
+        1
+    };
 
-// pub fn place_secret_door(mut starting_area: Grid, wall: Wall) -> Grid {
-//     let mut rng = rand::thread_rng();
-//     let door = Node::Tile(Tile {kind: TileKind::Door, icon: TileIcon::Wall});
-//     let floor = Node::Tile(Tile {kind: TileKind::Floor, icon: TileIcon::Wall});
-
-//     match wall {
-//         Wall::North => {
-//             let top_row = 0;
-//             let bottom_row = 1;
-//             let wall_length = starting_area.columns - 4;
-//             let column = rng.gen_range(2..wall_length + 2);
-//             starting_area.nodes[column + (starting_area.columns * top_row)] = floor.clone();
-//             starting_area.nodes[column + (starting_area.columns * bottom_row)] = door.clone();
-//         },
-//         Wall::South => {
-//             let top_row = (starting_area.nodes.len() / starting_area.columns) - 2;
-//             let bottom_row = (starting_area.nodes.len() / starting_area.columns) - 1;
-//             let wall_length = starting_area.columns - 4;
-//             let column = rng.gen_range(2..wall_length + 2);
-//             starting_area.nodes[column + (starting_area.columns * top_row)] = door.clone();
-//             starting_area.nodes[column + (starting_area.columns * bottom_row)] = floor.clone();
-//         },
-//         Wall::East => {
-//             let left_column = 0;
-//             let right_column = 1;
-//             let wall_length = (starting_area.nodes.len() / starting_area.columns) - 4;
-//             let row = rng.gen_range(2..wall_length + 2);
-//             starting_area.nodes[(row * starting_area.columns) + left_column] = floor.clone();
-//             starting_area.nodes[(row * starting_area.columns) + right_column] = door.clone();
-//         },
-//         Wall::West => {
-//             let left_column = starting_area.columns - 2;
-//             let right_column = starting_area.columns - 1;
-//             let wall_length = (starting_area.nodes.len() / starting_area.columns) - 4;
-//             let row = rng.gen_range(2..wall_length + 2);
-//             starting_area.nodes[(row * starting_area.columns) + left_column] = door.clone();
-//             starting_area.nodes[(row * starting_area.columns) + right_column] = floor.clone();
-//         }
-//     }
-//     starting_area
-// }
+    Grid::new(
+        num_columns,
+        match wall {
+            Wall::North | Wall::West => vec![flor.clone(), door.clone()],
+            Wall::South | Wall::East => vec![door.clone(), flor.clone()]
+        }
+    )
+}

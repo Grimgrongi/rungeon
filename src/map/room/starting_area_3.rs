@@ -1,75 +1,81 @@
-use crate::grid::Grid as Grid;
-use crate::grid::Node as Node;
-use crate::map::room::place_door as place_door;
-use crate::map::room::Room as Room;
-use crate::map::room::Wall as Wall;
-use crate::grid::tile::Tile as Tile;
-use crate::grid::tile::TileIcon as TileIcon;
-use crate::grid::tile::TileKind as TileKind;
+use crate::dice;
+use crate::map::grid::{Grid, Node};
+use crate::map::grid::tile::{Tile, TileIcon, TileKind};
+use crate::map::room::{Room, Wall, shuffle_walls, get_exit_door};
 
-use rand::Rng;
+/*
+    Starting Area 3 is a 40x40ft square room that serves as the starting point for a map.
+    There are three guaranteed exits; three doors.
+    Doors may be 5ft wide.
 
-// https://github.com/Ronatos/rungeon/wiki/Room#starting-area-3
+    # # # # # # # # # # # #
+    # # # # # # # # # # # #
+    # #                 # #
+    # #                 # #
+    # #                 # #
+    # #                 # #
+    # #                 # #
+    # #                 # #
+    # #                 # #
+    # #                 # #
+    # # # # # # # # # # # #
+    # # # # # # # # # # # #
+*/
 pub fn new() -> Room {
+    // Set room properties.
+    const NUM_ROWS: usize = 12;
+    const NUM_COLS: usize = 12;
+    const WALL_THICKNESS: usize = 2;
+
+    const NORTH_WALL_ROW: usize = 0;
+    const SOUTH_WALL_ROW: usize = NUM_ROWS - WALL_THICKNESS;
+    const EAST_WALL_COL: usize = NUM_COLS - WALL_THICKNESS;
+    const WEST_WALL_COL: usize = 0;
+
+    // Initialize building blocks for the room.
     let wall = Node::Tile(Tile {
         kind: TileKind::Wall,
         icon: TileIcon::Wall
     });
-    let floor = Node::Tile(Tile {
+    let flor = Node::Tile(Tile {
         kind: TileKind::Floor,
         icon: TileIcon::Floor
     });
-    let mut exits: Vec<Wall> = Vec::new();
 
-    let mut starting_area3 = Grid::new(12, vec![
-        wall.clone(),wall.clone(),wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
-        wall.clone(),wall.clone(),wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
-        wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-        wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-        wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-        wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-        wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-        wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-        wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-        wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-        wall.clone(),wall.clone(),wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
-        wall.clone(),wall.clone(),wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone()
+    // Initialize the base shape of the room.
+    let mut room_grid = Grid::new(NUM_COLS, vec![
+        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
+        wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone()
     ]);
 
-    // Repeat exactly 3 times.
-    // 1. Select a wall from the remaining empty walls at random.
-    // 2. Build a door
-    // 3. Remove whichever wall is selected from the list of available walls.
+    // Randomly select walls for the exits.
+    let mut walls = [Wall::North, Wall::South, Wall::East, Wall::West];
+    shuffle_walls(&mut walls);
 
-    let mut exits_to_build = 3;
-    let mut empty_walls = vec![Wall::North, Wall::South, Wall::East, Wall::West];
-    let mut rng = rand::thread_rng();
-    while exits_to_build > 0 {
-        let wall_index = rng.gen_range(0..empty_walls.len());
-        let wall_selection = &empty_walls[wall_index];
-
-        match wall_selection {
-            Wall::North => {
-                starting_area3 = place_door(starting_area3, Wall::North);
-                exits.push(Wall::North);
-            },
-            Wall::South => {
-                starting_area3 = place_door(starting_area3, Wall::South);
-                exits.push(Wall::South);
-            },
-            Wall::East => {
-                starting_area3 = place_door(starting_area3, Wall::East);
-                exits.push(Wall::East);
-            },
-            Wall::West => {
-                starting_area3 = place_door(starting_area3, Wall::West);
-                exits.push(Wall::West);
+    for (index, wall) in walls.iter().take(3).enumerate() {
+        match index {
+            _ => {
+                let door_index = dice::roll_range(2, 5) as usize;
+                let door_exit = get_exit_door(*wall);
+                match *wall {
+                    Wall::North => room_grid.update(&door_exit, NORTH_WALL_ROW, door_index),
+                    Wall::South => room_grid.update(&door_exit, SOUTH_WALL_ROW, door_index),
+                    Wall::East => room_grid.update(&door_exit, door_index, EAST_WALL_COL),
+                    Wall::West => room_grid.update(&door_exit, door_index, WEST_WALL_COL)
+                }
             }
         }
-
-        empty_walls.remove(wall_index);
-        exits_to_build = exits_to_build - 1;
     }
 
-    Room::new(starting_area3, exits)
+    Room::new(room_grid)
 }

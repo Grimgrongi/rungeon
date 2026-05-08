@@ -1,7 +1,7 @@
 use crate::dice;
 use crate::map::grid::{Grid, Node};
 use crate::map::grid::tile::{Tile, TileIcon, TileKind};
-use crate::map::room::{Room, ExitLength, get_random_exit_length};
+use crate::map::room::{Room, ExitLength,  Wall, get_exit_passage, get_random_exit_length, shuffle_walls, get_exit_door};
 
 /*
     Starting Area 2 is a 20x20ft square room that serves as the starting point for a map.
@@ -47,7 +47,7 @@ pub fn new() -> Room {
     });
 
     // Initialize the base shape of the room.
-    let mut shape = Grid::new(8, vec![
+    let mut room_grid = Grid::new(NUM_COLS, vec![
         wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
         wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
         wall.clone(), wall.clone(), flor.clone(), flor.clone(), flor.clone(), flor.clone(), wall.clone(), wall.clone(),
@@ -58,41 +58,52 @@ pub fn new() -> Room {
         wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone()
     ]);
 
-    // Determine exit lengths given size of room
-    let north_exit_width = get_random_exit_length(MAX_EXIT_LENGTH);
-    let south_exit_width = get_random_exit_length(MAX_EXIT_LENGTH);
-    let east_exit_height = get_random_exit_length(MAX_EXIT_LENGTH);
-    let west_exit_height = get_random_exit_length(MAX_EXIT_LENGTH);
-
-    // Generate exits for the room.
-    const MAX_EXIT_WIDTH: ExitWidth = ExitWidth::Twenty;
-    let mut walls = [ExitWall::North, ExitWall::South, ExitWall::East, ExitWall::West];
+    // Randomly select walls for the exits.
+    let mut walls = [Wall::North, Wall::South, Wall::East, Wall::West];
     shuffle_walls(&mut walls);
 
-    let exits = vec![
-        Exit::new(walls[0], ExitKind::Door, ExitWidth::Five),
-        Exit::new(walls[1], ExitKind::Door, ExitWidth::Five),
-        Exit::new(walls[2], ExitKind::Passage, get_random_exit_width(MAX_EXIT_WIDTH))
-    ];
-
-    // Modify the base shape of the room to accommodate the exits.
-    for exit in exits.iter() {
-        match exit.wall {
-            ExitWall::North => {
-                add_passage(&mut shape, placement_on_wall(ExitWall::North, exit.width));
+    for (index, wall) in walls.iter().take(3).enumerate() {
+        match index {
+            // Handle the Passage first
+            1 => {
+                let passage_length = get_random_exit_length(MAX_EXIT_LENGTH);
+                let passage_index = match passage_length {
+                    ExitLength::Five => dice::roll_range(2, 5) as usize,
+                    ExitLength::Ten => dice::roll_range(2, 4) as usize,
+                    ExitLength::Twenty => 2 as usize,
+                    _ => panic!("Invalid exit length for starting_area_2: {:?}", passage_length)
+                };
+                match wall {
+                    Wall::North => {
+                        let north_exit = get_exit_passage(Wall::North, passage_length);
+                        room_grid.update(&north_exit, NORTH_WALL_ROW, passage_index);
+                    },
+                    Wall::South => {
+                        let south_exit = get_exit_passage(Wall::South, passage_length);
+                        room_grid.update(&south_exit, SOUTH_WALL_ROW, passage_index);
+                    },
+                    Wall::East => {
+                        let east_exit = get_exit_passage(Wall::East, passage_length);
+                        room_grid.update(&east_exit, passage_index, EAST_WALL_COL);
+                    },
+                    Wall::West => {
+                        let west_exit = get_exit_passage(Wall::West, passage_length);
+                        room_grid.update(&west_exit, passage_index, WEST_WALL_COL);
+                    }
+                }
             },
-            ExitWall::South => {
-                add_passage(&mut shape, placement_on_wall(ExitWall::South, exit.width));
-            },
-            ExitWall::East => {
-                add_passage(&mut shape, placement_on_wall(ExitWall::East, exit.width));
-            },
-            ExitWall::West => {
-                add_passage(&mut shape, placement_on_wall(ExitWall::West, exit.width));
-             }
+            _ => {
+                let door_index = dice::roll_range(2, 5) as usize;
+                let door_exit = get_exit_door(*wall);
+                match *wall {
+                    Wall::North => room_grid.update(&door_exit, NORTH_WALL_ROW, door_index),
+                    Wall::South => room_grid.update(&door_exit, SOUTH_WALL_ROW, door_index),
+                    Wall::East => room_grid.update(&door_exit, door_index, EAST_WALL_COL),
+                    Wall::West => room_grid.update(&door_exit, door_index, WEST_WALL_COL)
+                }
+            }
         }
     }
 
-    Room::new(shape, exits)
+    Room::new(room_grid)
 }
-
