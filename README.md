@@ -1,16 +1,24 @@
 # rungeon
 A Dungeons &amp; Dragons 5th Edition dungeon generator written in Rust.
 
-## To continue this project
+## Checklist
 - Tiles: COMPLETE
 - Grids: COMPLETE
 - Rooms: IN PROGRESS
-  Rooms are the practical application of grids. Need to review all rooms and verify completeness.
+  - Starting Areas: IN PROGRESS (4/10)
+    - 1: COMPLETE
+    - 2: COMPLETE
+    - 3: COMPLETE
+    - 4: COMPLETE
+    - 5: IN PROGRESS
+  - Passages: ON HOLD
+  - Chambers: ON HOLD
 - Maps: ON HOLD
-  Maps are the containers for rooms. Rooms need to be done first.
+
+## Considerations
+- It might be wise to skip ahead to maps before getting too far along in creating rooms (even though it's much easier now). I'm still not sure if I'll need exit objects or modified room objects to specify the exit sizes when procedurally generating the adjoining rooms in a map. I could probably make do with starting_area_1 (all passages), starting_area_3 (all doors), and at least one passage room.
 
 ## Old To-Do list
-1. Starting areas do not always lead to the correct size passages, only 5ft or 10ft wide ones (crate::map::room:place_passage() & starting_areas_1-10.rs should be edited)
-2. Established passage width in starting_area needs to be passed out to the map so correctly sized passages can be generated to extend from them (exit object? can other exit types have widths?)
-3. Passages need to be built out so map generation can continue
-4. Map generation will continue until we eventually learn how chambers will be implemented
+1. Established passage width in starting_area needs to be passed out to the map so correctly sized passages can be generated to extend from them (exit object? can other exit types have widths?)
+2. Passages need to be built out so map generation can continue
+3. Map generation will continue until we eventually learn how chambers will be implemented

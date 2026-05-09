@@ -55,6 +55,7 @@ pub fn new() -> Room {
         _ => panic!("Unexpected number of rows.")
     };
     
+    const MAX_EXIT_LENGTH: ExitLength = ExitLength::Forty;
     const WALL_THICKNESS: usize = 2;
 
     const NORTH_WALL_ROW: usize = 0;
@@ -100,64 +101,91 @@ pub fn new() -> Room {
     ]);
 
     if num_cols != 8 {
+        // We know we need to be in the horizontal configuration
         room_grid = room_grid.rotate_clockwise();
-    }
 
-        starting_area4 = place_door(starting_area4, Wall::East);
-        starting_area4 = place_door(starting_area4, Wall::West);
-        if dice::roll(12) <= 2 { // This will be a 5ft wide passage
-            starting_area4 = place_passage(starting_area4, Wall::North, 5);
-        }
-        else { // This will be a 10ft wide passage
-            starting_area4 = place_passage(starting_area4, Wall::North, 10);
-        }
-        if dice::roll(12) <= 2 { // This will be a 5ft wide passage
-            starting_area4 = place_passage(starting_area4, Wall::South, 5);
-        }
-        else { // This will be a 10ft wide passage
-            starting_area4 = place_passage(starting_area4, Wall::South, 10);
-        }
-        Room::new(starting_area4, exits)
+        // North and South are wide. Need passages there.
+
+        // Determine exit lengths given size of room
+        let north_exit_width = get_random_exit_length(MAX_EXIT_LENGTH);
+        let south_exit_width = get_random_exit_length(MAX_EXIT_LENGTH);
+
+        // Determine exit placement given exit lengths and valid ranges
+        let north_exit_col_index = match north_exit_width {
+            ExitLength::Five => dice::roll_range(2, 17) as usize,
+            ExitLength::Ten => dice::roll_range(2, 16) as usize,
+            ExitLength::Twenty => dice::roll_range(2, 14) as usize,
+            ExitLength::Thirty => dice::roll_range(2, 12) as usize,
+            ExitLength::Forty => dice::roll_range(2, 10) as usize
+        };
+        let south_exit_col_index = match south_exit_width {
+            ExitLength::Five => dice::roll_range(2, 17) as usize,
+            ExitLength::Ten => dice::roll_range(2, 16) as usize,
+            ExitLength::Twenty => dice::roll_range(2, 14) as usize,
+            ExitLength::Thirty => dice::roll_range(2, 12) as usize,
+            ExitLength::Forty => dice::roll_range(2, 10) as usize
+        };
+
+        // Generate exit grids given exit lengths and wall orientations.
+        let north_exit = get_exit_passage(Wall::North, north_exit_width);
+        let south_exit = get_exit_passage(Wall::South, south_exit_width);
+
+        // Update room grid with exits
+        room_grid.update(&north_exit, NORTH_WALL_ROW, north_exit_col_index);
+        room_grid.update(&south_exit, south_wall_row, south_exit_col_index);
+
+        // East and West are narrow. Need doors there.
+        let east_door_index = dice::roll_range(2, 5) as usize;
+        let east_door_exit = get_exit_door(Wall::East);
+        room_grid.update(&east_door_exit, east_door_index, east_wall_col);
+
+        let west_door_index = dice::roll_range(2, 5) as usize;
+        let west_door_exit = get_exit_door(Wall::West);
+        room_grid.update(&west_door_exit, west_door_index, WEST_WALL_COL);
+
+        Room::new(room_grid)
     }
     else {
-        // Let's build a vertical starting area 4
-        let mut starting_area4 = Grid::new(8, vec![
-            wall.clone(),wall.clone(),wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),wall.clone(), wall.clone(), floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),floor.clone(),floor.clone(),floor.clone(),floor.clone(),wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(),
-            wall.clone(),wall.clone(),wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone(), wall.clone()
-        ]);
+        // We know we need to be in the vertical configuration
+        // North and South are narrow. Need doors there.
+        let north_door_index = dice::roll_range(2, 5) as usize;
+        let north_door_exit = get_exit_door(Wall::North);
+        room_grid.update(&north_door_exit, NORTH_WALL_ROW, north_door_index);
 
-        starting_area4 = place_door(starting_area4, Wall::North);
-        starting_area4 = place_door(starting_area4, Wall::South);
-        if dice::roll(12) <= 2 { // This will be a 5ft wide passage
-            starting_area4 = place_passage(starting_area4, Wall::East, 5);
-        }
-        else { // This will be a 10ft wide passage
-            starting_area4 = place_passage(starting_area4, Wall::East, 10);
-        }
-        if dice::roll(12) <= 2 { // This will be a 5ft wide passage
-            starting_area4 = place_passage(starting_area4, Wall::West, 5);
-        }
-        else { // This will be a 10ft wide passage
-            starting_area4 = place_passage(starting_area4, Wall::West, 10);
-        }
-        Room::new(starting_area4, exits)
+        let south_door_index = dice::roll_range(2, 5) as usize;
+        let south_door_exit = get_exit_door(Wall::South);
+        room_grid.update(&south_door_exit, south_wall_row, south_door_index);
+
+        // East and West are wide. Need passages there.
+
+        // Determine exit lengths given size of room
+        let east_exit_width = get_random_exit_length(MAX_EXIT_LENGTH);
+        let west_exit_width = get_random_exit_length(MAX_EXIT_LENGTH);
+
+        // Determine exit placement given exit lengths and valid ranges
+        let east_exit_row_index = match east_exit_width {
+            ExitLength::Five => dice::roll_range(2, 17) as usize,
+            ExitLength::Ten => dice::roll_range(2, 16) as usize,
+            ExitLength::Twenty => dice::roll_range(2, 14) as usize,
+            ExitLength::Thirty => dice::roll_range(2, 12) as usize,
+            ExitLength::Forty => dice::roll_range(2, 10) as usize
+        };
+        let west_exit_row_index = match west_exit_width {
+            ExitLength::Five => dice::roll_range(2, 17) as usize,
+            ExitLength::Ten => dice::roll_range(2, 16) as usize,
+            ExitLength::Twenty => dice::roll_range(2, 14) as usize,
+            ExitLength::Thirty => dice::roll_range(2, 12) as usize,
+            ExitLength::Forty => dice::roll_range(2, 10) as usize
+        };
+
+        // Generate exit grids given exit lengths and wall orientations.
+        let east_exit = get_exit_passage(Wall::East, east_exit_width);
+        let west_exit = get_exit_passage(Wall::West, west_exit_width);
+
+        // Update room grid with exits
+        room_grid.update(&east_exit, east_exit_row_index, east_wall_col);
+        room_grid.update(&west_exit, west_exit_row_index, WEST_WALL_COL);
+
+        Room::new(room_grid)
     }
 }
